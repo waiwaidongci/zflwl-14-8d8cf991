@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "weight_policy": {
+    "version": 1,
+    "basis": "business_priority",
+    "core_min_share": 0.5
+  },
+  "gate_tests": [
+    "test_outputs.py::test_gate_schedule_meets_heat_balance_and_final_state"
+  ],
+  "tests": {
+    "test_outputs.py::test_minimum_up_and_down_times_shape_commitment": {
+      "weight": 0.20,
+      "priority": "core",
+      "rationale": "连续开停机时间决定机组能否启停，直接约束寒潮期间的可用供热计划。"
+    },
+    "test_outputs.py::test_final_on_streak_at_minimum_up_is_accepted": {
+      "weight": 0.04,
+      "priority": "boundary",
+      "rationale": "最终时段恰好达到最短运行时间时必须放行，否则合法交接计划会被误拒。"
+    },
+    "test_outputs.py::test_storage_shift_respects_final_inventory": {
+      "weight": 0.20,
+      "priority": "core",
+      "rationale": "储热跨时转移与最终库存共同决定计划能否在次日交接时保持账实一致。"
+    },
+    "test_outputs.py::test_storage_capacity_upper_bound_is_accepted": {
+      "weight": 0.22,
+      "priority": "core",
+      "rationale": "公开容量上界必须可求解，否则大型储热罐的真实调度无法进入优化器。"
+    },
+    "test_outputs.py::test_efficiency_below_public_limit_is_refused": {
+      "weight": 0.07,
+      "priority": "schema",
+      "rationale": "低于公开效率边界的数据会使物理模型失真，必须在计算前拒收。"
+    },
+    "test_outputs.py::test_hourly_array_length_mismatch_is_refused": {
+      "weight": 0.07,
+      "priority": "schema",
+      "rationale": "逐时数组错位会把电价套到错误小时，造成整个计划成本失真。"
+    },
+    "test_outputs.py::test_boolean_integer_field_is_refused": {
+      "weight": 0.07,
+      "priority": "boundary",
+      "rationale": "布尔值冒充容量会偷偷改变机组出力，必须按类型边界明确拒绝。"
+    },
+    "test_outputs.py::test_success_output_is_canonical_and_silent": {
+      "weight": 0.06,
+      "priority": "supporting",
+      "rationale": "能源管理系统按字节留档，稳定编码与安静成功通道便于自动复核。"
+    },
+    "test_outputs.py::test_cli_argument_arity_contract": {
+      "weight": 0.07,
+      "priority": "recovery",
+      "rationale": "批处理误传参数时保持明确拒绝，避免空白计划进入运行日志。"
+    }
+  }
+}
