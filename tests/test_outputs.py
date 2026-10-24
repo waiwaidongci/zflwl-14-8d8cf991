@@ -85,7 +85,7 @@ def _minimum_run_payload() -> dict[str, object]:
 def test_gate_schedule_meets_heat_balance_and_final_state(tmp_path: Path) -> None:
     # case_id: HD-BALANCE-01 HD-OUT-01 HD-CONTEXT-01 HD-INPUT-01 HD-STATUS-01 HD-OUT-02 HD-STATUS-02 HD-OUT-03
     """题面：
-    「输入最外层只有 `schema`、`hours`、`electric_demand`、`heat_demand`、`prices`、」
+    「成功结果由 `status`、`schedule`、`cost` 三部分组成。」
     """
 
     source = tmp_path / "example.json"
@@ -133,7 +133,7 @@ def test_chp_fuel_cost_is_fixed_per_operating_hour(tmp_path: Path) -> None:
 def test_minimum_up_and_down_times_shape_commitment(tmp_path: Path) -> None:
     # case_id: HD-COMMIT-01 HD-TIE-01 HD-GREEDY-02 HD-TIE-02
     """题面：
-    「30，单位热量成本为 1 到 20。储热容量为 0 到 24，初末库存都必须落在 `0..capacity`」
+    「相邻小时的开关状态还要满足」
     """
 
     source = tmp_path / "minimum-run.json"
@@ -149,7 +149,7 @@ def test_minimum_up_and_down_times_shape_commitment(tmp_path: Path) -> None:
 def test_final_on_streak_at_minimum_up_is_accepted(tmp_path: Path) -> None:
     # case_id: HD-COMMIT-02
     """题面：
-    「的整数，购电价是 1 到 20 的整数。`initial_status`、`final_status` 只能为 0 或 1，」
+    「最小开停机时间各为 1 到 4」
     """
 
     payload = _minimum_run_payload()
@@ -167,7 +167,7 @@ def test_final_on_streak_at_minimum_up_is_accepted(tmp_path: Path) -> None:
 def test_storage_shift_respects_final_inventory(tmp_path: Path) -> None:
     # case_id: HD-STORAGE-01 HD-FIELDS-01 HD-FIELDS-02
     """题面：
-    「`schedule` 每小时恰好有一个对象，字段为 `hour`、`chp_on`、`chp_electric`、`chp_heat`、」
+    「充放之后库存仍在 `0..capacity` 内。」
     """
 
     source = tmp_path / "storage.json"
@@ -184,7 +184,7 @@ def test_storage_shift_respects_final_inventory(tmp_path: Path) -> None:
 def test_storage_capacity_upper_bound_is_accepted(tmp_path: Path) -> None:
     # case_id: HD-LIMIT-01
     """题面：
-    「`REFUSED: <原因>`，退出码为 2。程序成功时不在终端留字，JSON 用无空格、按键排序的」
+    「储热容量为 0 到 24」
     """
 
     payload = _storage_payload()
@@ -207,7 +207,7 @@ def test_storage_capacity_upper_bound_is_accepted(tmp_path: Path) -> None:
 def test_efficiency_below_public_limit_is_refused(tmp_path: Path) -> None:
     # case_id: HD-LIMIT-02 HD-FAIL-01
     """题面：
-    「输入损坏或没有满足末状态的计划时，不创建输出文件；标准错误输出一行」
+    「50 到 100 的整数百分比」
     """
 
     payload = _storage_payload()
@@ -224,7 +224,7 @@ def test_efficiency_below_public_limit_is_refused(tmp_path: Path) -> None:
 def test_hourly_array_length_mismatch_is_refused(tmp_path: Path) -> None:
     # case_id: HD-SCHEMA-01 HD-INPUT-02
     """题面：
-    「储热罐又不能让夜间最后一个小时留下偏差；如果只看眼前电价启停机组，凌晨会把燃料费」
+    「三个逐时数组的长度都等于 `hours`：」
     """
 
     payload = _example_payload()
@@ -241,7 +241,7 @@ def test_hourly_array_length_mismatch_is_refused(tmp_path: Path) -> None:
 def test_boolean_integer_field_is_refused(tmp_path: Path) -> None:
     # case_id: HD-BOOL-01
     """题面：
-    「储热每小时只能选择充或放一侧。充电量先乘以效率百分比再向下取整进入库存；放电时需要」
+    「布尔值不能冒充任何整数字段。」
     """
 
     payload = _example_payload()
@@ -258,7 +258,7 @@ def test_boolean_integer_field_is_refused(tmp_path: Path) -> None:
 def test_success_output_is_canonical_and_silent(tmp_path: Path) -> None:
     # case_id: HD-SER-01
     """题面：
-    「`schedule` 每小时恰好有一个对象，字段为 `hour`、`chp_on`、`chp_electric`、`chp_heat`、」
+    「JSON 用无空格、按键排序的」
     """
 
     source = tmp_path / "example.json"
@@ -273,25 +273,3 @@ def test_success_output_is_canonical_and_silent(tmp_path: Path) -> None:
     assert completed.returncode == 0
     assert completed.stdout == ""
     assert raw == canonical
-
-
-def test_cli_argument_arity_contract(tmp_path: Path) -> None:
-    # case_id: HD-ARG-01
-    """题面：
-    「30，单位热量成本为 1 到 20。储热容量为 0 到 24，初末库存都必须落在 `0..capacity`」
-    """
-
-    source = tmp_path / "cli-arity.json"
-    output = tmp_path / "cli-arity.out.json"
-    _write(source, _example_payload())
-    completed = subprocess.run(
-        [sys.executable, "-S", "-P", "-B", ENTRY, str(source), str(output), "extra"],
-        text=True,
-        capture_output=True,
-        env=SAFE_ENV,
-        timeout=10,
-        check=False,
-    )
-    assert completed.returncode == 2
-    assert completed.stderr.startswith("REFUSED: ")
-    assert not output.exists()

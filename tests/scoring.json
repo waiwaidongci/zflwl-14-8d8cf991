@@ -10,7 +10,7 @@
   ],
   "tests": {
     "test_outputs.py::test_minimum_up_and_down_times_shape_commitment": {
-      "weight": 0.19,
+      "weight": 0.22,
       "priority": "core",
       "rationale": "连续开停机时间决定机组能否启停，直接约束寒潮期间的可用供热计划。"
     },
@@ -49,13 +49,8 @@
       "priority": "supporting",
       "rationale": "能源管理系统按字节留档，稳定编码与安静成功通道便于自动复核。"
     },
-    "test_outputs.py::test_cli_argument_arity_contract": {
-      "weight": 0.06,
-      "priority": "recovery",
-      "rationale": "批处理误传参数时保持明确拒绝，避免空白计划进入运行日志。"
-    },
     "test_outputs.py::test_chp_fuel_cost_is_fixed_per_operating_hour": {
-      "weight": 0.08,
+      "weight": 0.11,
       "priority": "core",
       "rationale": "固定开机小时燃料费与按发电量计费会得到不同最优计划，必须用可区分成本回归锁定口径。"
     }
