@@ -10,7 +10,7 @@
   ],
   "tests": {
     "test_outputs.py::test_minimum_up_and_down_times_shape_commitment": {
-      "weight": 0.20,
+      "weight": 0.19,
       "priority": "core",
       "rationale": "连续开停机时间决定机组能否启停，直接约束寒潮期间的可用供热计划。"
     },
@@ -20,17 +20,17 @@
       "rationale": "最终时段恰好达到最短运行时间时必须放行，否则合法交接计划会被误拒。"
     },
     "test_outputs.py::test_storage_shift_respects_final_inventory": {
-      "weight": 0.20,
+      "weight": 0.19,
       "priority": "core",
       "rationale": "储热跨时转移与最终库存共同决定计划能否在次日交接时保持账实一致。"
     },
     "test_outputs.py::test_storage_capacity_upper_bound_is_accepted": {
-      "weight": 0.22,
+      "weight": 0.19,
       "priority": "core",
       "rationale": "公开容量上界必须可求解，否则大型储热罐的真实调度无法进入优化器。"
     },
     "test_outputs.py::test_efficiency_below_public_limit_is_refused": {
-      "weight": 0.07,
+      "weight": 0.06,
       "priority": "schema",
       "rationale": "低于公开效率边界的数据会使物理模型失真，必须在计算前拒收。"
     },
@@ -45,14 +45,19 @@
       "rationale": "布尔值冒充容量会偷偷改变机组出力，必须按类型边界明确拒绝。"
     },
     "test_outputs.py::test_success_output_is_canonical_and_silent": {
-      "weight": 0.06,
+      "weight": 0.05,
       "priority": "supporting",
       "rationale": "能源管理系统按字节留档，稳定编码与安静成功通道便于自动复核。"
     },
     "test_outputs.py::test_cli_argument_arity_contract": {
-      "weight": 0.07,
+      "weight": 0.06,
       "priority": "recovery",
       "rationale": "批处理误传参数时保持明确拒绝，避免空白计划进入运行日志。"
+    },
+    "test_outputs.py::test_chp_fuel_cost_is_fixed_per_operating_hour": {
+      "weight": 0.08,
+      "priority": "core",
+      "rationale": "固定开机小时燃料费与按发电量计费会得到不同最优计划，必须用可区分成本回归锁定口径。"
     }
   }
 }

@@ -168,10 +168,11 @@ def optimize(model: dict[str, Any]) -> dict[str, Any]:
                 chp_heat = chp_electric * chp["heat_ratio"]
                 grid = max(0, model["electric_demand"][hour] - chp_electric)
                 startup = chp["startup_cost"] if previous_status == 0 and status == 1 else 0
+                fuel = chp["fuel_cost"] if status else 0
                 fixed_cost = (
                     base_cost
                     + startup
-                    + (chp["fuel_cost"] if status else 0)
+                    + fuel
                     + grid * model["prices"][hour]
                 )
                 for boiler_heat in range(boiler["capacity_heat"] + 1):

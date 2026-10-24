@@ -9,12 +9,22 @@ from pathlib import Path
 
 ENTRY = os.environ.get("THERMAL_ENTRY", "/app/dispatch.py")
 
+SAFE_ENV = {
+    "PATH": "/usr/bin:/bin",
+    "HOME": "/tmp",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONHASHSEED": "0",
+}
+
 
 def _run(payload: Path, output: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, ENTRY, str(payload), str(output)],
+        [sys.executable, "-S", "-P", "-B", ENTRY, str(payload), str(output)],
         text=True,
         capture_output=True,
+        env=SAFE_ENV,
         timeout=30,
         check=False,
     )
@@ -88,6 +98,36 @@ def test_gate_schedule_meets_heat_balance_and_final_state(tmp_path: Path) -> Non
     assert result["schedule"][-1]["chp_on"] == 0
     assert result["schedule"][-1]["soc"] == 1
     assert result["cost"] == 151
+
+
+def test_chp_fuel_cost_is_fixed_per_operating_hour(tmp_path: Path) -> None:
+    """题面：
+    「`fuel_cost` 是每个开机小时支付的固定燃料费」
+    「不乘 `capacity_e`、实际发电量或热比；停机小时不计燃料费」
+    """
+
+    # case_id: HD-FUEL-01
+    payload = {
+        "schema": "heat-dispatch-v1",
+        "hours": 4,
+        "electric_demand": [0, 0, 0, 0],
+        "heat_demand": [0, 0, 0, 0],
+        "prices": [1, 1, 1, 1],
+        "chp": {"capacity_e": 5, "heat_ratio": 1, "min_up": 1, "min_down": 1, "startup_cost": 2, "fuel_cost": 5},
+        "boiler": {"capacity_heat": 0, "heat_cost": 1},
+        "storage": {"capacity": 0, "initial_soc": 0, "final_soc": 0, "efficiency_percent": 100},
+        "initial_status": 0,
+        "initial_streak": 0,
+        "final_status": 1,
+    }
+    source = tmp_path / "fuel-cost.json"
+    output = tmp_path / "fuel-cost.out.json"
+    _write(source, payload)
+    completed = _run(source, output)
+    result = json.loads(output.read_text(encoding="utf-8"))
+    assert completed.returncode == 0
+    assert result["cost"] == 7
+    assert [row["chp_on"] for row in result["schedule"]] == [0, 0, 0, 1]
 
 
 def test_minimum_up_and_down_times_shape_commitment(tmp_path: Path) -> None:
@@ -245,9 +285,10 @@ def test_cli_argument_arity_contract(tmp_path: Path) -> None:
     output = tmp_path / "cli-arity.out.json"
     _write(source, _example_payload())
     completed = subprocess.run(
-        [sys.executable, ENTRY, str(source), str(output), "extra"],
+        [sys.executable, "-S", "-P", "-B", ENTRY, str(source), str(output), "extra"],
         text=True,
         capture_output=True,
+        env=SAFE_ENV,
         timeout=10,
         check=False,
     )
